@@ -1,0 +1,14 @@
+[Unit]
+Description=Spoofing Asterisk AGI
+After=network-online.target asterisk.service
+
+[Service]
+WorkingDirectory=/juno/apps/spoofing-agi
+ExecStart=/juno/apps/spoofing-agi/spoofing-agi
+SuccessExitStatus=143
+User=asterisk
+Group=asterisk
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

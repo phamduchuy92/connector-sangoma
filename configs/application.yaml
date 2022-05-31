@@ -1,0 +1,58 @@
+# AGI Script mapping
+tcpAddress: "localhost:4573"
+
+# apiEndpoint to retrieve spoofing result.
+# FULL URL: http://IP:port/api/public/perform-spoofing?calling=${CALLING}&called=${CALLED}&channel=SIP&peer=${PEER_IP}
+apiEndpoint: "http://localhost:8090/api/public/perform-spoofing"
+
+# Timeout in ms
+timeout: 600
+
+# If dryRun, then causeCodeDefault will be return and HTTP callback will be perform afterwards
+dryRun: true
+
+# Default cause code, used on Dry run
+defaultCauseCode: 1
+
+# Mapping between HTTP callback API endpoint status vs asterisk SIP cause code
+causeCodeMapping:
+  200: 1
+  401: 42
+  403: 42
+  422: 1
+  429: 1
+  500: 1
+  502: 42
+  504: 1
+  510: 42
+
+
+# Backup from Java application
+default-code: 1
+errorMap:
+  - errorCode: 422
+    causeCode: 1
+    errorDesc: Route Not Found
+  - errorCode: 401
+    causeCode: 42
+    errorDesc: Blacklisted
+  - errorCode: 403
+    causeCode: 42
+    errorDesc: ''
+  - errorCode: 429
+    causeCode: 1
+    errorDesc: Failed to query SRI
+  - errorCode: 502
+    causeCode: 42
+    errorDesc: Invalid Subscriber Information
+  - errorCode: 504
+    causeCode: 1
+    errorDesc: HLR late response
+  - errorCode: 510
+    causeCode: 42
+  - errorCode: 100
+    causeCode: 1
+    errorDesc: ''
+  - errorCode: 500
+    causeCode: 1
+    errorDesc: Internal Error

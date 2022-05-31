@@ -1,0 +1,24 @@
+# Endpoint for connect to application
+mnp-checker:
+  port: 1335
+
+endpoint:
+  apiEndpoint: "http://10.155.99.8:8082/check-mnp"
+  clientID: VNPT
+  privateKey: 
+  apiKey:
+
+database:
+  user: asterisk
+  password: asterisk
+  name: asterisk
+  host: 127.0.0.1
+  port: 5432
+  sslmode: disable
+  timezone: Asia/Ho_Chi_Minh
+  
+redis:
+  address: localhost:6379
+  password: ""
+  db: 0
+  timeout: 60000

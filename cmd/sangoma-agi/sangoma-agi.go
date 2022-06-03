@@ -40,7 +40,7 @@ func main() {
 
 // setDefaultConfig set viper configuration when nothing inside
 func setDefaultConfig() {
-	viper.SetDefault("tcpAddress", ":52000")
+	viper.SetDefault("tcpAddress", ":2212")
 	viper.SetDefault("timeout", 1000)
 	viper.SetDefault("channel", "SIP")
 	viper.SetDefault("dryRun", true)

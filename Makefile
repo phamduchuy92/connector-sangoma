@@ -14,13 +14,7 @@ go-update:
 	go get -u ./...
 	
 agi:
-	$(GOSTATICBUILD) -o build/package/spoofing-agi cmd/spoofing-agi/spoofing-agi.go
-
-mnp-checker:
-	$(GOSTATICBUILD) -o build/package/mnp-checker cmd/mnp-checker/mnp-checker.go
-
-roaming-checker:
-	$(GOSTATICBUILD) -o build/package/roaming-checker cmd/roaming-checker/roaming-checker.go
+	$(GOSTATICBUILD) -o build/package/sangoma-agi cmd/sangoma-agi/sangoma-agi.go
 
 install:
 	if [ -d /apps/spoofing-agi ] ; then \
@@ -36,11 +30,5 @@ install:
 
 deploy-agi:
 	rsync -avP spoofing-agi vnptspoofing:/juno/apps/spoofing-agi/
-
-deploy-mnp-checker:
-	rsync -avP build/package/mnp-checker vnptspoofing:/juno/apps/mnp-checker/
-
-deploy-roaming-checker:
-	rsync -avP build/package/roaming-checker  vnptspoofing:/juno/apps/roaming-checker/
 
 all: clean agi

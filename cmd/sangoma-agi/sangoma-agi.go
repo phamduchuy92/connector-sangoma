@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -14,8 +13,6 @@ import (
 
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
-
-	uuid "github.com/google/uuid"
 )
 
 var (
@@ -35,7 +32,7 @@ func main() {
 		log.Println("Unable to read configuration file `application.yaml`. Using defaults")
 	}
 
-	reloadCausecodeMapping()
+	// reloadCausecodeMapping()
 
 	log.Printf("Application started on [%s]", viper.GetString("tcpAddress"))
 	agi.Listen(viper.GetString("tcpAddress"), handler)
@@ -43,10 +40,10 @@ func main() {
 
 // setDefaultConfig set viper configuration when nothing inside
 func setDefaultConfig() {
-	viper.SetDefault("tcpAddress", ":4567")
+	viper.SetDefault("tcpAddress", ":52000")
 	viper.SetDefault("timeout", 1000)
 	viper.SetDefault("channel", "SIP")
-	viper.SetDefault("dryRun", false)
+	viper.SetDefault("dryRun", true)
 	viper.SetDefault("defaultCauseCode", 1)
 }
 
@@ -93,30 +90,30 @@ func handler(a *agi.AGI) {
 	s := strings.Split(peerIP, ":")
 	peerIP = s[0]
 
-	UUID := uuid.New()
+	// UUID := uuid.New()
 
-	u, err := url.Parse(viper.GetString("apiEndpoint"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	q := u.Query()
-	q.Set("channel", viper.GetString("channel"))
-	q.Set("calling", calling)
-	q.Set("called", called)
-	q.Set("peer", peerIP)
-	q.Set("callref", UUID.String())
-	u.RawQuery = q.Encode()
+	// u, err := url.Parse(viper.GetString("apiEndpoint"))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// q := u.Query()
+	// q.Set("channel", viper.GetString("channel"))
+	// q.Set("calling", calling)
+	// q.Set("called", called)
+	// q.Set("peer", peerIP)
+	// q.Set("callref", UUID.String())
+	// u.RawQuery = q.Encode()
 
 	causeCode := viper.GetInt("defaultCauseCode")
-	if !viper.GetBool("dryRun") {
-		log.Printf("[%s] | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
-		causeCode = callback(u, uniqID)
-	} else {
-		log.Printf("[%s] DRYRUN | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
-		go callback(u, uniqID)
-	}
+	// if !viper.GetBool("dryRun") {
+	// 	log.Printf("[%s] | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
+	// 	causeCode = callback(u, uniqID)
+	// } else {
+	// 	log.Printf("[%s] DRYRUN | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
+	// 	go callback(u, uniqID)
+	// }
 	log.Printf("[%s] | [%s] -> [%s] | causeCode [%d]", uniqID, calling, called, causeCode)
-	a.Set("SPOOFING_CODE", fmt.Sprintf("%d", causeCode))
+	// a.Set("SPOOFING_CODE", fmt.Sprintf("%d", causeCode))
 	a.Close()
 	// a.Command(fmt.Sprintf("GOSUB %s code-%d 1", agiContext, causeCode)).Err()
 	// a.Command(fmt.Sprintf("HANGUP %d", causeCode)).Err()
@@ -153,39 +150,4 @@ func callback(u *url.URL, uniqID string) int {
 		causeCode = resp.StatusCode
 	}
 	return causeCode
-}
-
-// ReadConfigConsul get config from consul
-func ReadConfigConsul() {
-	runtimeViper.AddRemoteProvider("consul", "localhost:8500", "config/test")
-	runtimeViper.SetConfigType("yaml") // because there is no file extension in a stream of bytes, supported extensions are "json", "toml", "yaml", "yml", "properties", "props", "prop", "env", "dotenv"
-
-	// read from remote config the first time.
-	err := runtimeViper.ReadRemoteConfig()
-	if err != nil {
-		log.Println("cannot read config from consul")
-	}
-	listenerCh := make(chan bool)
-
-	// open a goroutine to watch remote changes forever
-	go func() {
-		for {
-			err := runtimeViper.WatchRemoteConfigOnChannel()
-			if err != nil {
-				log.Printf("unable to read remote config: %v", err)
-				continue
-			}
-			for {
-				time.Sleep(time.Second * 5) // delay after each request
-				listenerCh <- true
-			}
-		}
-	}()
-	for {
-		select {
-		case <-listenerCh:
-			runtimeViper.ReadRemoteConfig()
-			fmt.Printf("test %+v", runtimeViper)
-		}
-	}
 }

@@ -1,25 +1,33 @@
 package main
 
 import (
+	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"log"
-	"strconv"
-	"strings"
 	"time"
 
-	"net/http"
-	"net/url"
-
 	"github.com/CyCoreSystems/agi"
+	"github.com/valyala/fasthttp"
 
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 )
 
-var (
-	sipCauseCode = make(map[int]int)
-	// config from consul
-	runtimeViper = viper.New()
-)
+type NotificationRequest struct {
+	SDT      string
+	status   string
+	ext      string
+	datetime string
+}
+
+var authorization = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2dyYXRpc29mdC50ZWNoLyIsInVwbiI6InNhbmdvbWEiLCJncm91cHMiOlsiMTE5NWJmZTAtZWRmMi00YzBlLThiNDktZTU5ZDI2MDcyYmM1Il0sImV4cCI6MzE1NTY4ODk4NjQ0MDMxOTksImlhdCI6MTY1Mzg5NTEyNywianRpIjoiMGY0NDA2OWUtMmM2NS00NmM2LWJjNGEtNjg1NDVmMmQ1MGE0In0.Ol4elsuUI6gFh1PIXbalRD3G_6G6D5783cPW-7FTVRLFHu5l-14NH0qBBU4r39xOLcUfD-UxA_tUUoUUS47IMtC17tVCP6ITFjhUvH31e3RkNywg_iHSf70zHfgMm_v1l9VPmhuBeT1ReJ57im2-GZAQA0L2KaWqQtPK4ZlrzwbMmn-zkHDdXa9Y0YalBdg_VTGqBsfvEc_bLef8Jq7rZ8TlYz6K7NZKqBJWc8K1vDyreCWyx9F6wT6RN0pTVyRQFIrIY7pqKfCdlx2WsSIDsidfBfnBwnj_5TqJofATNRWPkhEee8dKqgyBHSHBVLG1JEYM1tpFukcx7nbqwDXpFA"
+var username = "sangoma"
+var password = "hXKv_ngMEZK$vE8*@55aNYP#"
+var webClient = &fasthttp.Client{
+	TLSConfig: &tls.Config{InsecureSkipVerify: true},
+}
 
 func main() {
 	viper.SetConfigName("application") // config file name without extension
@@ -32,47 +40,24 @@ func main() {
 		log.Println("Unable to read configuration file `application.yaml`. Using defaults")
 	}
 
-	// reloadCausecodeMapping()
-
 	log.Printf("Application started on [%s]", viper.GetString("tcpAddress"))
 	agi.Listen(viper.GetString("tcpAddress"), handler)
 }
 
 // setDefaultConfig set viper configuration when nothing inside
 func setDefaultConfig() {
-	viper.SetDefault("tcpAddress", ":2212")
-	viper.SetDefault("timeout", 1000)
-	viper.SetDefault("channel", "SIP")
-	viper.SetDefault("dryRun", true)
-	viper.SetDefault("defaultCauseCode", 1)
-}
-
-// reloadCausecodeMapping reload application causecode from viper
-func reloadCausecodeMapping() {
-	causeCodeMap := viper.GetStringMapString("causeCodeMapping")
-	for key, element := range causeCodeMap {
-		httpCode, err := strconv.Atoi(key)
-		if err != nil {
-			log.Printf("Unable to parse HTTP code [%s]", key)
-			continue
-		}
-		sipCode, err := strconv.Atoi(element)
-		if err != nil {
-			log.Printf("Unable to parse SIP code [%s]", element)
-			continue
-		}
-		sipCauseCode[httpCode] = sipCode
-	}
-	log.Printf("Causecode Mapping: %+v", sipCauseCode)
+	viper.SetDefault("tcpAddress", "localhost:4573")
+	viper.SetDefault("notify.apiEndpoint", "http://payment.sisvietnam.vn/gis/restful/callcenter/webhook/updateCallInfo")
+	viper.SetDefault("login.apiEndpoint", "http://payment.sisvietnam.vn/gis/restful/callcenter/login")
+	viper.SetDefault("login.username", username)
+	viper.SetDefault("login.password", password)
 }
 
 func handler(a *agi.AGI) {
 	defer a.Close()
 
-	uniqID, err := a.Get("UNIQUEID")
-	if err != nil {
-		log.Printf("Cannot get call UNIQUEID")
-	}
+	login(viper.GetString("login.apiEndpoint"), viper.GetString("login.username"), viper.GetString("login.password"))
+	log.Printf("Login with %s[%s]", viper.GetString("login.username"), viper.GetString("login.password"))
 
 	calling, err := a.Get("CALLERID(num)")
 	if err != nil {
@@ -82,72 +67,81 @@ func handler(a *agi.AGI) {
 	if err != nil {
 		log.Printf("Cannot detect called number")
 	}
+	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
-	peerIP, err := a.Get("PEER_IP")
-	if err != nil {
-		peerIP = ""
-	}
-	s := strings.Split(peerIP, ":")
-	peerIP = s[0]
-
-	// UUID := uuid.New()
-
-	// u, err := url.Parse(viper.GetString("apiEndpoint"))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// q := u.Query()
-	// q.Set("channel", viper.GetString("channel"))
-	// q.Set("calling", calling)
-	// q.Set("called", called)
-	// q.Set("peer", peerIP)
-	// q.Set("callref", UUID.String())
-	// u.RawQuery = q.Encode()
-
-	causeCode := viper.GetInt("defaultCauseCode")
-	// if !viper.GetBool("dryRun") {
-	// 	log.Printf("[%s] | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
-	// 	causeCode = callback(u, uniqID)
-	// } else {
-	// 	log.Printf("[%s] DRYRUN | [%s] -> [%s] | [%s] >> [%s]", uniqID, calling, called, peerIP, u)
-	// 	go callback(u, uniqID)
-	// }
-	log.Printf("[%s] | [%s] -> [%s] | causeCode [%d]", uniqID, calling, called, causeCode)
-	// a.Set("SPOOFING_CODE", fmt.Sprintf("%d", causeCode))
 	a.Close()
-	// a.Command(fmt.Sprintf("GOSUB %s code-%d 1", agiContext, causeCode)).Err()
-	// a.Command(fmt.Sprintf("HANGUP %d", causeCode)).Err()
 }
 
-func callback(u *url.URL, uniqID string) int {
-	httpClient := http.Client{
-		Timeout: time.Duration(viper.GetInt("timeout")) * time.Millisecond,
+func notify(url string, calling string, called string) error {
+	notification := NotificationRequest{
+		SDT:      calling,
+		status:   "ANSWER",
+		ext:      called,
+		datetime: time.Now().Format("200601021504"),
 	}
-	causeCode := viper.GetInt("causeCodeDefault")
-	resp, err := httpClient.Get(u.String())
-
+	log.Printf("[%s] | [%s] -> [%s]", notification.datetime, calling, called)
+	json_data, err := json.Marshal(notification)
 	if err != nil {
-		log.Printf("[%s] | ERR: [%s] | %v", uniqID, u, err)
-		return causeCode
+		log.Fatal(err)
 	}
-	// switch {
-	// case resp.StatusCode < 400:
-	// 	log.Printf("[%s] | Success response", uniqID)
-	// 	causeCode = 1
-	// 	break
-	// case resp.StatusCode < 500:
-	// 	log.Printf("[%s] | Client errors", uniqID)
-	// 	causeCode = 42
-	// 	break
-	// default:
-	// 	log.Printf("[%s] | Server errors", uniqID)
-	// 	causeCode = 1
-	// 	break
-	// }
-	if sipCode, ok := sipCauseCode[resp.StatusCode]; ok {
-		causeCode = sipCode
+
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(url)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authorization))
+	req.Header.SetMethod(fasthttp.MethodPost)
+	req.SetBody(json_data)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Perform the request
+	err = webClient.Do(req, resp)
+	if err != nil {
+		log.Println(err)
+	}
+	if resp.StatusCode() == 200 {
+		log.Println("Successfully send to CRM")
+	} else if resp.StatusCode() == 401 {
+		log.Println("Unauthorized")
 	} else {
-		causeCode = resp.StatusCode
+		log.Println("Internal error")
 	}
-	return causeCode
+
+	return nil
+}
+
+// login perform a login request to server
+func login(url string, username string, password string) error {
+	var err error
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(url)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", basicAuth(username, password)))
+	req.Header.SetMethod(fasthttp.MethodGet)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Perform the request
+	err = webClient.Do(req, resp)
+	if err != nil {
+		log.Println(err)
+	}
+	if resp.StatusCode() < 300 {
+		authorization = fmt.Sprintf("Bearer %s", string(resp.Body()))
+		return nil
+	}
+
+	log.Printf("Failed to login request with response: %d", resp.StatusCode())
+	return nil
+}
+
+func basicAuth(username string, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }

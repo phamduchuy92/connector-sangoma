@@ -16,7 +16,7 @@ import (
 )
 
 type NotificationRequest struct {
-	SDT      string
+	mobile   string
 	status   string
 	ext      string
 	datetime string
@@ -63,7 +63,7 @@ func handler(a *agi.AGI) {
 	if err != nil {
 		log.Printf("Cannot detect calling number")
 	}
-	called, err := a.Get("EXTEN")
+	called, err := a.Get("QAGENT")
 	if err != nil {
 		log.Printf("Cannot detect called number")
 	}
@@ -74,12 +74,12 @@ func handler(a *agi.AGI) {
 
 func notify(url string, calling string, called string) error {
 	notification := NotificationRequest{
-		SDT:      calling,
+		mobile:   calling,
 		status:   "ANSWER",
 		ext:      called,
 		datetime: time.Now().Format("200601021504"),
 	}
-	log.Printf("[%s] | [%s] -> [%s]", notification.datetime, calling, called)
+	log.Printf("%s | %s -> %s", notification.datetime, calling, called)
 	json_data, err := json.Marshal(notification)
 	if err != nil {
 		log.Fatal(err)

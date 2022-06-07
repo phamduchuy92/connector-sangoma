@@ -59,6 +59,11 @@ func handler(a *agi.AGI) {
 	login(viper.GetString("login.apiEndpoint"), viper.GetString("login.username"), viper.GetString("login.password"))
 	log.Printf("Login with %s[%s]", viper.GetString("login.username"), viper.GetString("login.password"))
 
+	calleriddid, err := a.Get("CALLERID(did)")
+	if err != nil {
+		log.Printf("Cannot detect calling number")
+	}
+	log.Printf("CALLERID(did) %v", calleriddid)
 	calling, err := a.Get("CALLERID(num)")
 	if err != nil {
 		log.Printf("Cannot detect calling number")

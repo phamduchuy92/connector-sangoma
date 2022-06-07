@@ -129,6 +129,11 @@ func handler(a *agi.AGI) {
 		log.Printf("Cannot detect called number")
 	}
 	log.Printf("BRIDGEDPEER %v", bridgepeer)
+	queueuser, err := a.Get("QUEUEUSER")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("QUEUEUSER %v", queueuser)
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()

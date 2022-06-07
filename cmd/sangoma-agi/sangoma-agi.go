@@ -63,6 +63,7 @@ func handler(a *agi.AGI) {
 	if err != nil {
 		log.Printf("Cannot detect calling number")
 	}
+	called := "500"
 	qagent, err := a.Get("QAGENT")
 	if err != nil {
 		log.Printf("Cannot detect called number")
@@ -87,7 +88,7 @@ func notify(url string, calling string, called string) error {
 	notification := NotificationRequest{
 		Mobile:   calling,
 		Status:   "ANSWER",
-		Ext:      "500",
+		Ext:      called,
 		Datetime: time.Now().Format("200601021504"),
 	}
 	log.Printf("%s | %s -> %s", notification.Datetime, calling, called)

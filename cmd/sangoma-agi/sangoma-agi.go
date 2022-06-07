@@ -16,10 +16,10 @@ import (
 )
 
 type NotificationRequest struct {
-	mobile   string
-	status   string
-	ext      string
-	datetime string
+	Mobile   string `json:"id"`
+	Status   string `json:"status"`
+	Ext      string `json:"ext"`
+	Datetime string `json:"datetime"`
 }
 
 var authorization = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2dyYXRpc29mdC50ZWNoLyIsInVwbiI6InNhbmdvbWEiLCJncm91cHMiOlsiMTE5NWJmZTAtZWRmMi00YzBlLThiNDktZTU5ZDI2MDcyYmM1Il0sImV4cCI6MzE1NTY4ODk4NjQ0MDMxOTksImlhdCI6MTY1Mzg5NTEyNywianRpIjoiMGY0NDA2OWUtMmM2NS00NmM2LWJjNGEtNjg1NDVmMmQ1MGE0In0.Ol4elsuUI6gFh1PIXbalRD3G_6G6D5783cPW-7FTVRLFHu5l-14NH0qBBU4r39xOLcUfD-UxA_tUUoUUS47IMtC17tVCP6ITFjhUvH31e3RkNywg_iHSf70zHfgMm_v1l9VPmhuBeT1ReJ57im2-GZAQA0L2KaWqQtPK4ZlrzwbMmn-zkHDdXa9Y0YalBdg_VTGqBsfvEc_bLef8Jq7rZ8TlYz6K7NZKqBJWc8K1vDyreCWyx9F6wT6RN0pTVyRQFIrIY7pqKfCdlx2WsSIDsidfBfnBwnj_5TqJofATNRWPkhEee8dKqgyBHSHBVLG1JEYM1tpFukcx7nbqwDXpFA"
@@ -63,10 +63,21 @@ func handler(a *agi.AGI) {
 	if err != nil {
 		log.Printf("Cannot detect calling number")
 	}
-	called, err := a.Get("QAGENT")
+	qagent, err := a.Get("QAGENT")
 	if err != nil {
 		log.Printf("Cannot detect called number")
 	}
+	log.Printf("QAGENT %v", qagent)
+	exten, err := a.Get("EXTEN")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("EXTEN %v", exten)
+	agentexten, err := a.Get("AGENTEXTEN")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("AGENTEXTEN %v", agentexten)
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()
@@ -74,12 +85,12 @@ func handler(a *agi.AGI) {
 
 func notify(url string, calling string, called string) error {
 	notification := NotificationRequest{
-		mobile:   calling,
-		status:   "ANSWER",
-		ext:      called,
-		datetime: time.Now().Format("200601021504"),
+		Mobile:   calling,
+		Status:   "ANSWER",
+		Ext:      "500",
+		Datetime: time.Now().Format("200601021504"),
 	}
-	log.Printf("%s | %s -> %s", notification.datetime, calling, called)
+	log.Printf("%s | %s -> %s", notification.Datetime, calling, called)
 	json_data, err := json.Marshal(notification)
 	if err != nil {
 		log.Fatal(err)
@@ -93,7 +104,7 @@ func notify(url string, calling string, called string) error {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authorization))
 	req.Header.SetMethod(fasthttp.MethodPost)
 	req.SetBody(json_data)
-
+	log.Printf("Body %v", string(json_data))
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(resp)
 

@@ -114,6 +114,21 @@ func handler(a *agi.AGI) {
 		log.Printf("Cannot detect called number")
 	}
 	log.Printf("CHANCONTEXT %v", chancontext)
+	channel, err := a.Get("CHANNEL")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("CHANNEL %v", channel)
+	memberinterface, err := a.Get("MEMBERINTERFACE")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("MEMBERINTERFACE %v", memberinterface)
+	bridgepeer, err := a.Get("BRIDGEDPEER")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("BRIDGEDPEER %v", bridgepeer)
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()

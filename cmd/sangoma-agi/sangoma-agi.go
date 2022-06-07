@@ -16,7 +16,7 @@ import (
 )
 
 type NotificationRequest struct {
-	Mobile   string `json:"id"`
+	Mobile   string `json:"mobile"`
 	Status   string `json:"status"`
 	Ext      string `json:"ext"`
 	Datetime string `json:"datetime"`
@@ -79,6 +79,16 @@ func handler(a *agi.AGI) {
 		log.Printf("Cannot detect called number")
 	}
 	log.Printf("AGENTEXTEN %v", agentexten)
+	from_did, err := a.Get("FROM_DID")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("FROM_DID %v", from_did)
+	did, err := a.Get("DID")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("DID %v", did)
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()

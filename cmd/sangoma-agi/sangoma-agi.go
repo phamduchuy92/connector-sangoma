@@ -94,6 +94,26 @@ func handler(a *agi.AGI) {
 		log.Printf("Cannot detect called number")
 	}
 	log.Printf("DID %v", did)
+	calleridnumber, err := a.Get("CALLERID(number)")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("CALLERID(number) %v", calleridnumber)
+	chanexten, err := a.Get("CHANEXTEN")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("CHANEXTEN %v", chanexten)
+	chanextencontext, err := a.Get("CHANEXTENCONTEXT")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("CHANEXTENCONTEXT %v", chanextencontext)
+	chancontext, err := a.Get("CHANCONTEXT")
+	if err != nil {
+		log.Printf("Cannot detect called number")
+	}
+	log.Printf("CHANCONTEXT %v", chancontext)
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()
@@ -134,7 +154,7 @@ func notify(url string, calling string, called string) error {
 	} else if resp.StatusCode() == 401 {
 		log.Println("Unauthorized")
 	} else {
-		log.Println("Internal error")
+		log.Printf("Internal error with status %d", resp.StatusCode())
 	}
 
 	return nil

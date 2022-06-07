@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"testing"
 	"time"
 
@@ -86,4 +87,11 @@ func TestNotify(t *testing.T) {
 func basicAuth(username string, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
+}
+
+func TestRegex(t *testing.T) {
+	match, _ := regexp.MatchString("^Local\\/(.*?)\\@{1}.*?", "Local/500@from-queue-00000273;1")
+	fmt.Println(match)
+	r, _ := regexp.Compile("^Local\\/(.*?)\\@{1}.*")
+	fmt.Println(r.FindStringSubmatch("Local/500@from-queue-00000273;1")[1])
 }

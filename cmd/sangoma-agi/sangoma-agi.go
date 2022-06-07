@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/CyCoreSystems/agi"
@@ -59,81 +60,16 @@ func handler(a *agi.AGI) {
 	login(viper.GetString("login.apiEndpoint"), viper.GetString("login.username"), viper.GetString("login.password"))
 	log.Printf("Login with %s[%s]", viper.GetString("login.username"), viper.GetString("login.password"))
 
-	calleriddid, err := a.Get("CALLERID(did)")
-	if err != nil {
-		log.Printf("Cannot detect calling number")
-	}
-	log.Printf("CALLERID(did) %v", calleriddid)
 	calling, err := a.Get("CALLERID(num)")
 	if err != nil {
 		log.Printf("Cannot detect calling number")
 	}
-	called := "500"
-	qagent, err := a.Get("QAGENT")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("QAGENT %v", qagent)
-	exten, err := a.Get("EXTEN")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("EXTEN %v", exten)
-	agentexten, err := a.Get("AGENTEXTEN")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("AGENTEXTEN %v", agentexten)
-	from_did, err := a.Get("FROM_DID")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("FROM_DID %v", from_did)
-	did, err := a.Get("DID")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("DID %v", did)
-	calleridnumber, err := a.Get("CALLERID(number)")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("CALLERID(number) %v", calleridnumber)
-	chanexten, err := a.Get("CHANEXTEN")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("CHANEXTEN %v", chanexten)
-	chanextencontext, err := a.Get("CHANEXTENCONTEXT")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("CHANEXTENCONTEXT %v", chanextencontext)
-	chancontext, err := a.Get("CHANCONTEXT")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("CHANCONTEXT %v", chancontext)
 	channel, err := a.Get("CHANNEL")
 	if err != nil {
-		log.Printf("Cannot detect called number")
+		log.Printf("Cannot detect channel")
 	}
-	log.Printf("CHANNEL %v", channel)
-	memberinterface, err := a.Get("MEMBERINTERFACE")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("MEMBERINTERFACE %v", memberinterface)
-	bridgepeer, err := a.Get("BRIDGEDPEER")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("BRIDGEDPEER %v", bridgepeer)
-	queueuser, err := a.Get("QUEUEUSER")
-	if err != nil {
-		log.Printf("Cannot detect called number")
-	}
-	log.Printf("QUEUEUSER %v", queueuser)
+	r, _ := regexp.Compile("^Local\\/(.*?)\\@{1}.*")
+	called := r.FindStringSubmatch(channel)[1]
 	notify(viper.GetString("notify.apiEndpoint"), calling, called)
 
 	a.Close()
@@ -142,7 +78,7 @@ func handler(a *agi.AGI) {
 func notify(url string, calling string, called string) error {
 	notification := NotificationRequest{
 		Mobile:   calling,
-		Status:   "ANSWER",
+		Status:   "IN_PROGRESS",
 		Ext:      called,
 		Datetime: time.Now().Format("200601021504"),
 	}

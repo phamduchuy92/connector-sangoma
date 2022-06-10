@@ -56,29 +56,49 @@ func setDefaultConfig() {
 
 func handler(a *agi.AGI) {
 	defer a.Close()
-
+	var status = "RINGING"
 	login(viper.GetString("login.apiEndpoint"), viper.GetString("login.username"), viper.GetString("login.password"))
 	log.Printf("Login with %s[%s]", viper.GetString("login.username"), viper.GetString("login.password"))
 
-	calling, err := a.Get("CALLERID(num)")
+	callerid, err := a.Get("CALLERID(num)")
 	if err != nil {
 		log.Printf("Cannot detect calling number")
 	}
+	log.Printf("callerid %s", callerid)
+	exten, err := a.Get("EXTEN")
+	if err != nil {
+		log.Printf("Cannot detect exten number")
+	}
+	log.Printf("exten %s", exten)
+	qagent, err := a.Get("QAGENT")
+	if err != nil {
+		log.Printf("Cannot detect qagent number")
+	}
+	log.Printf("qagent %s", qagent)
+	memberinterface, err := a.Get("MEMBERINTERFACE")
+	if err != nil {
+		log.Printf("Cannot detect memberinterface number")
+	}
+	log.Printf("memberinterface %s", memberinterface)
 	channel, err := a.Get("CHANNEL")
 	if err != nil {
 		log.Printf("Cannot detect channel")
 	}
 	r, _ := regexp.Compile("^Local\\/(.*?)\\@{1}.*")
-	called := r.FindStringSubmatch(channel)[1]
-	notify(viper.GetString("notify.apiEndpoint"), calling, called)
+	if len(r.FindStringSubmatch(channel)) > 0 {
+		exten = r.FindStringSubmatch(channel)[1]
+		status = "IN_PROGRESS"
+	}
+
+	notify(viper.GetString("notify.apiEndpoint"), callerid, exten, status)
 
 	a.Close()
 }
 
-func notify(url string, calling string, called string) error {
+func notify(url string, calling string, called string, status string) error {
 	notification := NotificationRequest{
 		Mobile:   calling,
-		Status:   "IN_PROGRESS",
+		Status:   status,
 		Ext:      called,
 		Datetime: time.Now().Format("200601021504"),
 	}

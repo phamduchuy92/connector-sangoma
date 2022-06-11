@@ -70,22 +70,12 @@ func handler(a *agi.AGI) {
 		log.Printf("Cannot detect exten number")
 	}
 	log.Printf("exten %s", exten)
-	qagent, err := a.Get("QAGENT")
-	if err != nil {
-		log.Printf("Cannot detect qagent number")
-	}
-	log.Printf("qagent %s", qagent)
-	memberinterface, err := a.Get("MEMBERINTERFACE")
-	if err != nil {
-		log.Printf("Cannot detect memberinterface number")
-	}
-	log.Printf("memberinterface %s", memberinterface)
 	channel, err := a.Get("CHANNEL")
 	if err != nil {
 		log.Printf("Cannot detect channel")
 	}
 	r, _ := regexp.Compile("^Local\\/(.*?)\\@{1}.*")
-	if len(r.FindStringSubmatch(channel)) > 0 {
+	if len(r.FindStringSubmatch(channel)) > 0 && exten == "" {
 		exten = r.FindStringSubmatch(channel)[1]
 		status = "IN_PROGRESS"
 	}

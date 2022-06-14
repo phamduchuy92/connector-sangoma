@@ -74,6 +74,12 @@ func handler(a *agi.AGI) {
 	if err != nil {
 		log.Printf("Cannot detect channel")
 	}
+	log.Printf("channel %s", channel)
+	status, err := a.Get("DIALSTATUS")
+	if err != nil {
+		log.Printf("Cannot detect status")
+	}
+	log.Printf("status %s", status)
 	r, _ := regexp.Compile("^Local\\/(.*?)\\@{1}.*")
 	if len(r.FindStringSubmatch(channel)) > 0 && exten == "" {
 		exten = r.FindStringSubmatch(channel)[1]

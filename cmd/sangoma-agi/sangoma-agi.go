@@ -109,7 +109,7 @@ func notify(url string, calling string, called string, status string) error {
 
 	req.SetRequestURI(url)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authorization))
+	req.Header.Set("Authorization", fmt.Sprintf("%s", authorization))
 	req.Header.SetMethod(fasthttp.MethodPost)
 	req.SetBody(json_data)
 	log.Printf("Body %v", string(json_data))

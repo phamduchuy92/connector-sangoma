@@ -48,8 +48,8 @@ func main() {
 // setDefaultConfig set viper configuration when nothing inside
 func setDefaultConfig() {
 	viper.SetDefault("tcpAddress", "localhost:4573")
-	viper.SetDefault("notify.apiEndpoint", "http://payment.sisvietnam.vn/gis/restful/callcenter/webhook/updateCallInfo")
-	viper.SetDefault("login.apiEndpoint", "http://payment.sisvietnam.vn/gis/restful/callcenter/login")
+	viper.SetDefault("notify.apiEndpoint", "https://api.sisvietnam.vn/gis/restful/callcenter/webhook/updateCallInfo")
+	viper.SetDefault("login.apiEndpoint", "https://api.sisvietnam.vn/gis/restful/callcenter/login")
 	viper.SetDefault("login.username", username)
 	viper.SetDefault("login.password", password)
 }

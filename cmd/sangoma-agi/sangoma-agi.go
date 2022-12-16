@@ -96,7 +96,7 @@ func notify(url string, calling string, called string, status string) error {
 		Mobile:   calling,
 		Status:   status,
 		Ext:      called,
-		Datetime: time.Now().Format("200601021504"),
+		Datetime: time.Now().Format("2006-01-02 15:04:05"),
 	}
 	log.Printf("%s | %s -> %s", notification.Datetime, calling, called)
 	json_data, err := json.Marshal(notification)
